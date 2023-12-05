@@ -17,11 +17,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bankalfalah.app.employeeportal.MailSenderService;
 import com.bankalfalah.app.employeeportal.models.ERole;
 import com.bankalfalah.app.employeeportal.models.Role;
 import com.bankalfalah.app.employeeportal.models.User;
@@ -54,6 +56,9 @@ public class AuthController {
   @Autowired
   JwtUtils jwtUtils;
 
+  @Autowired
+  MailSenderService mailService;
+
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -84,6 +89,7 @@ public class AuthController {
         String otp = String.format("%04d", new Random().nextInt(10000));
         obUser.setOtp(otp);
         userRepository.save(obUser);
+        mailService.sendNewMail(obUser.getEmail(), "OTP", "Your OTP verfication Code is "+ otp);
         message = "Verfication Code sent on your registered email.";
     }else if((obUser.getOtp().equals(passwordRequest.getOtp()))){
 
@@ -157,7 +163,16 @@ public class AuthController {
 
     user.setRoles(roles);
     userRepository.save(user);
+    mailService.sendNewMail(user.getEmail(), "OTP", "Your OTP verfication Code is "+ otp);
 
     return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+  }
+
+  @GetMapping("/testemail")
+  public ResponseEntity<?> sendEmail() {
+
+  mailService.sendNewMail("samoon.shahjahan@gmail.com", "OTP", "Your OTP verfication Code is "+ "1234");
+    return ResponseEntity
+        .ok("Mail sent");
   }
 }
